@@ -1,5 +1,8 @@
 ttPublicClient <- InitPublicWebClient(server = "ttlivewebapi.fxopen.com")
+
+
 test_that("Is Last 10 Ticks right format", {
+  skip_on_cran()
   if(requireNamespace("lubridate", quietly = TRUE)){
     reqTimeInMS <- round(as.double(lubridate::now("UTC")) * 1000)
   }else{
@@ -14,6 +17,7 @@ test_that("Is Last 10 Ticks right format", {
 })
 
 test_that("Is Last 10 Bars right format", {
+  skip_on_cran()
   if(requireNamespace("lubridate", quietly = TRUE)){
     reqTimeInMS <- round(as.double(lubridate::now("UTC")) * 1000)
   }else{
@@ -28,6 +32,7 @@ test_that("Is Last 10 Bars right format", {
 
 rhost <- InitRTTWebApiHost()
 test_that("Is Last 10 Bars right format", {
+  skip_on_cran()
   if(requireNamespace("lubridate", quietly = TRUE)){
     reqTime <- lubridate::now("UTC")
   }else{
@@ -41,6 +46,7 @@ test_that("Is Last 10 Bars right format", {
 })
 
 test_that("Is Last 10 ticks right format", {
+  skip_on_cran()
   if(requireNamespace("lubridate", quietly = TRUE)){
     reqTime <- lubridate::now("UTC")
   }else{

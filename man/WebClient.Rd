@@ -17,14 +17,8 @@ RTTWebApiHost
 \section{Methods}{
 
 \describe{
-\item{\code{GetBarsHistory(
-  symbol,
-  barsType = "Bid",
-  periodicity = "M1",
-  startTime,
-  endTime = as.POSIXct(Sys.Date(), tz = "GMT"),
-  count = 0L
-)}}{Get Bar History}
+\item{\code{GetBarsHistory(symbol, barsType = "Bid", periodicity = "M1", startTime,
+  endTime = as.POSIXct(Sys.Date(), tz = "GMT"), count = 0L)}}{Get Bar History}
 
 \item{\code{GetCurrentQuotes()}}{Get All Current Quotes}
 
@@ -32,11 +26,7 @@ RTTWebApiHost
 
 \item{\code{GetSymbolsInfo()}}{Get All Symbols}
 
-\item{\code{GetTickHistory(
-  symbol,
-  startTime,
-  endTime = as.POSIXct(Sys.Date(), tz = "GMT"),
-  count = 0L
-)}}{Get Bar History}
+\item{\code{GetTickHistory(symbol, startTime, endTime = as.POSIXct(Sys.Date(), tz =
+  "GMT"), count = 0L)}}{Get Bar History}
 }}
 

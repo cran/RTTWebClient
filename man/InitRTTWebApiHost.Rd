@@ -4,13 +4,8 @@
 \alias{InitRTTWebApiHost}
 \title{Init RTTWebApiHost}
 \usage{
-InitRTTWebApiHost(
-  server = "ttlivewebapi.fxopen.com",
-  port = 8443L,
-  id = NULL,
-  key = NULL,
-  secret = NULL
-)
+InitRTTWebApiHost(server = "ttlivewebapi.fxopen.com", port = 8443L,
+  id = NULL, key = NULL, secret = NULL)
 }
 \arguments{
 \item{server}{a character. Web Address.}
