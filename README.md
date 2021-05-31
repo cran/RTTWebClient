@@ -26,6 +26,6 @@ See code below
 ```
 library(RTTWebClient)
 publicClient <- InitPublicWebClient(server = "ttlivewebapi.fxopen.com")
-symbols <- publicClient$GetSymbolsInfoFromWeb()
+symbols <- publicClient$GetSymbolsInfoRawMethod()
  
 ```

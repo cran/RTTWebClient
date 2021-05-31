@@ -118,10 +118,10 @@ RTTWebClient <- setRefClass("RTTWebClient",
 
 
 #' Get All Dividend
-#' @name GetDividendsFromWeb
+#' @name GetDividendsRawMethod
 #' @return a data.table with dividends.
 RTTWebClient$methods(
-  GetDividendsFromWeb = function() {
+  GetDividendsRawMethod = function() {
     "Get All Dividend"
     address <- .self$web_api_address
     if(!grepl("^https://", address))
@@ -152,10 +152,10 @@ RTTWebClient$methods(
 )
 
 #' Get All Current Quotes
-#' @name GetCurrentQuotesFromWeb
+#' @name GetCurrentQuotesRawMethod
 #' @return a data.table with current quotes
 RTTWebClient$methods(
-  GetCurrentQuotesFromWeb = function() {
+  GetCurrentQuotesRawMethod = function() {
     "Get All Current Quotes"
     address <- .self$web_api_address
     if(!grepl("^https://", address))
@@ -188,11 +188,49 @@ RTTWebClient$methods(
   }
 )
 
+#' Get All Current Quotes
+#' @name GetPipsValueRawMethod
+#' @return a data.table with current quotes
+RTTWebClient$methods(
+  GetPipsValueRawMethod = function(targetCurrency, symbols) {
+    "Get Pip Value"
+    address <- .self$web_api_address
+    if(!grepl("^https://", address))
+      address <- paste0("https://", address)
+
+    portPattern <- paste0(":", .self$web_api_port, "$")
+    if(!grepl(portPattern, address))
+      address <- paste0(address, ":", .self$web_api_port)
+    if(length(.self$web_api_id) != 0 && length(.self$web_api_key) != 0 && length(.self$web_api_secret) != 0){
+      url_rel <- paste("/api/v2/pipsvalue")
+      url_rel <- paste0(url_rel,"?","targetCurrency=",targetCurrency,"&symbols=", symbols)
+      # url_abs <- utils::URLencode(paste0(address, url_rel), reserved = FALSE)
+      url_abs <- paste0(address, url_rel)
+      connect <- httr::GET(url_abs, httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L, verbose = FALSE),
+                           httr::add_headers(Authorization = getHMACHeaders(url_abs, .self$web_api_id, .self$web_api_key, .self$web_api_secret)))
+    }else{
+      url_rel <- paste("/api/v2/public/pipsvalue")
+      url_rel <- paste0(url_rel,"?","targetCurrency=",targetCurrency,"&symbols=", symbols)
+      # url_abs <- utils::URLencode(paste0(address, url_rel), reserved = FALSE)
+      url_abs <- paste0(address, url_rel)
+      connect <- httr::GET(url_abs, httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L, verbose = FALSE))
+
+    }
+    data <- httr::content(connect, "text", encoding = "UTF-8")
+    if(connect$status_code != 200) {
+      stop(paste("status_code is not OK", connect$status_code, as.character(data)))
+    }
+    # data <- content(connect, "text", encoding = "UTF-8")
+    pipsValue <- as.data.table(fromJSON(data))
+    return(pipsValue)
+  }
+)
+
 #' Get All Symbols
-#' @name GetSymbolsInfoFromWeb
+#' @name GetSymbolsInfoRawMethod
 #' @return data.table with symbol info
 RTTWebClient$methods(
-  GetSymbolsInfoFromWeb = function(){
+  GetSymbolsInfoRawMethod = function(){
     "Get All Symbols"
     address <- .self$web_api_address
     if(!grepl("^https://", address))
@@ -223,7 +261,7 @@ RTTWebClient$methods(
 )
 
 #' Get Bar History
-#' @name GetBarFromWeb
+#' @name GetBarRawMethod
 #' @param symbol a character. Symbol Name.
 #' @param barsType. a character. Bars Type. One from c("Ask", "Bid").
 #' @param periodicity. a character. Periodicity. From c("S1", "S10", "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1","MN1")
@@ -231,11 +269,12 @@ RTTWebClient$methods(
 #' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
 #' @return data.table with Bar Info
 RTTWebClient$methods(
-  GetBarFromWeb = function(symbol, barsType, periodicity, startTimeMs, count){
+  GetBarRawMethod = function(symbol, barsType, periodicity, startTimeMs, count){
     "Get Bar History"
 
     # nonScienceFormat <- options(scipen = 999)
     # on.exit(options(nonScienceFormat))
+    withr::local_options(list(scipen = 999))
     address <- .self$web_api_address
     if(!grepl("^https://", address))
       address <- paste0("https://", address)
@@ -268,17 +307,18 @@ RTTWebClient$methods(
 )
 
 #'Get Ticks History
-#' @name GetTicksFromWeb
+#' @name GetTicksRawMethod
 #' @param symbol. A character. Symbol Name.
 #' @param startTimeMs. Long numeric. Timestamp from 1970-01-01 in ms.
 #' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
 #' @return data.table with Ticks Info.
 RTTWebClient$methods(
-  GetTicksFromWeb = function(symbol, startTimeMs, count){
+  GetTicksRawMethod = function(symbol, startTimeMs, count){
     "Get Ticks History"
 
     # nonScienceFormat <- options(scipen = 999)
     # on.exit(options(nonScienceFormat))
+    withr::local_options(list(scipen = 999))
     address <- .self$web_api_address
     if(!grepl("^https://", address))
       address <- paste0("https://", address)
@@ -345,7 +385,7 @@ InitPrivateWebClient <- function(server = "ttlivewebapi.fxopen.com", port=8443L,
 
 
 #' RTTWebApiHost
-#' @name WebClient
+#' @name RTTWebApiHost
 #' @field client. RTTWebClient obj.
 RTTWebApiHost <- setRefClass("RTTWebApiHost",
                             fields = list(client = "RTTWebClient"),
@@ -362,7 +402,7 @@ RTTWebApiHost$methods(
   GetDividends = function()
   {
     "Get All Dividend"
-    return(.self$client$GetDividendsFromWeb())
+    return(.self$client$GetDividendsRawMethod())
   }
 )
 
@@ -372,7 +412,9 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetSymbolsInfo = function() {
     "Get All Symbols"
-    return(.self$client$GetSymbolsInfoFromWeb())
+    symbols <- .self$client$GetSymbolsInfoRawMethod()
+    symbols[!grepl("_L$", Symbol), PipsValue := .self$GetPipsValue("USD", Symbol)[,(Value)]]
+    return(symbols)
   }
 )
 
@@ -383,7 +425,21 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetCurrentQuotes = function() {
     "Get All Current Quotes"
-    return(.self$client$GetCurrentQuotesFromWeb())
+    return(.self$client$GetCurrentQuotesRawMethod())
+  }
+)
+
+#' Get Pips Value
+#' @name GetPipsValue
+#' @return a data.table with current quotes
+RTTWebApiHost$methods(
+  GetPipsValue = function(targetCurrency, symbols) {
+    "Get Pips Value"
+    symbols <- paste(sapply(symbols, URLencode, reserved = TRUE, USE.NAMES = FALSE), collapse = URLencode(" ", reserved = FALSE))
+    pipsValue <- .self$client$GetPipsValueRawMethod(targetCurrency, symbols)
+    setcolorder(pipsValue, c(2,1))
+    setkey(pipsValue, "Symbol")
+    return(pipsValue)
   }
 )
 
@@ -400,14 +456,14 @@ RTTWebApiHost$methods(
   GetBarsHistory = function(symbol, barsType = "Bid", periodicity = "M1", startTime, endTime = as.POSIXct(Sys.Date(), tz = "GMT"), count = 0L) {
     "Get Bar History"
     if(barsType == "Bid" || barasType == "Ask"){
-      return(GetBars(.self$client$GetBarFromWeb, symbol, barsType, periodicity, startTime, endTime, count))
+      return(GetBars(.self$client$GetBarRawMethod, symbol, barsType, periodicity, startTime, endTime, count))
     }
     stop("Wrong Bar Type")
   }
 )
 
 #'Get Ticks History
-#' @name GetTicksFromWeb
+#' @name GetTickHistory
 #' @param symbol. A character. Symbol Name.
 #' @param startTime a POSIXct obj. Start Time in UTC.
 #' @param endTime a POSIXct obj. End Time in UTC.
@@ -416,7 +472,7 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetTickHistory = function(symbol, startTime, endTime = as.POSIXct(Sys.Date(), tz = "GMT"), count = 0L) {
     "Get Bar History"
-    return(GetTicks(.self$client$GetTicksFromWeb, symbol, startTime, endTime, count))
+    return(GetTicks(.self$client$GetTicksRawMethod, symbol, startTime, endTime, count))
   }
 )
 

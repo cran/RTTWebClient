@@ -24,14 +24,16 @@ RTTWebClient Class
 \section{Methods}{
 
 \describe{
-\item{\code{GetBarFromWeb(symbol, barsType, periodicity, startTimeMs, count)}}{Get Bar History}
+\item{\code{GetBarRawMethod(symbol, barsType, periodicity, startTimeMs, count)}}{Get Bar History}
 
-\item{\code{GetCurrentQuotesFromWeb()}}{Get All Current Quotes}
+\item{\code{GetCurrentQuotesRawMethod()}}{Get All Current Quotes}
 
-\item{\code{GetDividendsFromWeb()}}{Get All Dividend}
+\item{\code{GetDividendsRawMethod()}}{Get All Dividend}
 
-\item{\code{GetSymbolsInfoFromWeb()}}{Get All Symbols}
+\item{\code{GetPipsValueRawMethod(targetCurrency, symbols)}}{Get Pip Value}
 
-\item{\code{GetTicksFromWeb(symbol, startTimeMs, count)}}{Get Ticks History}
+\item{\code{GetSymbolsInfoRawMethod()}}{Get All Symbols}
+
+\item{\code{GetTicksRawMethod(symbol, startTimeMs, count)}}{Get Ticks History}
 }}
 

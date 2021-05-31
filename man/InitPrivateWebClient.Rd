@@ -4,8 +4,13 @@
 \alias{InitPrivateWebClient}
 \title{Init Private Web Client Obj}
 \usage{
-InitPrivateWebClient(server = "ttlivewebapi.fxopen.com", port = 8443L,
-  id = "", key = "", secret = "")
+InitPrivateWebClient(
+  server = "ttlivewebapi.fxopen.com",
+  port = 8443L,
+  id = "",
+  key = "",
+  secret = ""
+)
 }
 \arguments{
 \item{server}{a character. Web Address.}
