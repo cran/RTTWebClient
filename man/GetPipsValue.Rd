@@ -3,8 +3,13 @@
 \name{GetPipsValue}
 \alias{GetPipsValue}
 \title{Get Pips Value}
+\arguments{
+\item{targetCurrency}{a character. Currency Name.}
+
+\item{symbols}{a character vectors. Symbols vector.}
+}
 \value{
-a data.table with current quotes
+a data.table with pips value in targetCurrency for every symbol in symbols vector
 }
 \description{
 Get Pips Value

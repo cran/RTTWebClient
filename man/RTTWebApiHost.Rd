@@ -25,9 +25,11 @@ RTTWebApiHost
   count = 0L
 )}}{Get Bar History}
 
+\item{\code{GetCurrencyInfo()}}{Get All Currencies}
+
 \item{\code{GetCurrentQuotes()}}{Get All Current Quotes}
 
-\item{\code{GetDividends()}}{Get All Dividend}
+\item{\code{GetDividends()}}{Get All Dividends}
 
 \item{\code{GetPipsValue(targetCurrency, symbols)}}{Get Pips Value}
 

@@ -6,7 +6,7 @@ GetBars <- function(GetBarMethod, symbol, barsType = "Bid", periodicity = "M1", 
   maxCount <- 1000
   if(count == 0) {
     repeat{
-      bars <- GetBarMethod(symbol, barsType, periodicity, tempStartTime, maxCount)
+      bars <- Throttling(GetBarMethod, symbol, barsType, periodicity, tempStartTime, maxCount)
       lastHistoryNoteTimestamp <- history[.N, Timestamp]
       excludeIndex <-ifelse(length(lastHistoryNoteTimestamp) <= 0, numeric(0), bars[Timestamp==lastHistoryNoteTimestamp,which=T])
       if(!is.na(excludeIndex))
@@ -25,13 +25,14 @@ GetBars <- function(GetBarMethod, symbol, barsType = "Bid", periodicity = "M1", 
     }
   }else{
     if(abs(count) < maxCount){
-      history <- GetBarMethod(symbol, barsType, periodicity, tempStartTime, count)
+      history <- Throttling(GetBarMethod, symbol, barsType, periodicity, tempStartTime, count)
     }else{
-      history <- GetBarMethod(symbol, barsType, periodicity, tempStartTime, maxCount * sign(count))
+      history <- Throttling(GetBarMethod, symbol, barsType, periodicity, tempStartTime, maxCount * sign(count))
     }
   }
   history[, Timestamp := as.POSIXct(Timestamp / 1000, origin = "1970-01-01", tz = "GMT")]
   setkey(history, Timestamp)
+  setcolorder(history, c("Timestamp", "Open", "Low", "High", "Close", "Volume"))
   return(history)
 }
 
@@ -44,7 +45,7 @@ GetTicks <- function(GetTickMethod, symbol, startTime, endTime, count) {
   maxCount <- 1000
   if(count == 0) {
     repeat{
-      ticks <- GetTickMethod(symbol, tempStartTime, maxCount)
+      ticks <- Throttling(GetTickMethod, symbol, tempStartTime, maxCount)
       lastHistoryNoteTimestamp <- history[.N, Timestamp]
       excludeIndex <-ifelse(length(lastHistoryNoteTimestamp) <= 0, numeric(0), ticks[Timestamp==lastHistoryNoteTimestamp, which=TRUE])
       if(!is.na(excludeIndex))
@@ -63,9 +64,9 @@ GetTicks <- function(GetTickMethod, symbol, startTime, endTime, count) {
     }
   }else{
     if(abs(count) < maxCount){
-      history <- GetTickMethod(symbol, tempStartTime, count)
+      history <- Throttling(GetTickMethod, symbol, tempStartTime, count)
     }else{
-      history <- GetTickMethod(symbol, tempStartTime, maxCount * sign(count))
+      history <- Throttling(GetTickMethod, symbol, tempStartTime, maxCount * sign(count))
     }
   }
   history[, Timestamp := as.POSIXct(Timestamp / 1000, origin = "1970-01-01", tz = "GMT")]
@@ -73,14 +74,34 @@ GetTicks <- function(GetTickMethod, symbol, startTime, endTime, count) {
   return(history)
 }
 
-GetBidAskBar <- function(GetBarMethod, symbol, periodicity = "M1", startTime, endTime, count) {
-  bidBars <- GetBars(GetBarMethod, symbol, barsType = "Bid", periodicity, startTime, endTime, count)
-  askBars <- GetBars(GetBarMethod, symbol, barsType = "Ask", periodicity, startTime, endTime, count)
-  bidAskBars <- merge(bidBars, askBars)
-  colnames(bidAskBars) <- c("Timestamp", "BidVolume", "BidClose", "BidLow", "BidHigh", "BidOpen",
-                            "AskVolume", "AskClose", "AskLow", "AskHigh", "AskOpen")
-  return(bidAskBars)
+Throttling <- function(func, ..., N = 10, sleepTimeSec = 1, errorPattern = "429"){
+  res <- NULL
+  func <- match.fun(func)
+  for(i in 1:N){
+    res <- tryCatch({
+      return(func(...))
+      # return(stop(errorPattern))
+    }, error = function(e){
+      print(paste( i, "-", e$message))
+      if(!grepl(errorPattern, e$message, fixed = TRUE))
+        stop(e$message)
+      print(paste("Sleeping", sleepTimeSec, "sec"))
+      Sys.sleep(sleepTimeSec)
+    })
+  }
+  if(length(res) == 0)
+    stop(paste("More than", N, "attempts with errors matchs the pattern", errorPattern))
+  return(res)
 }
+
+# GetBidAskBar <- function(GetBarMethod, symbol, periodicity = "M1", startTime, endTime, count) {
+#   bidBars <- GetBars(GetBarMethod, symbol, barsType = "Bid", periodicity, startTime, endTime, count)
+#   askBars <- GetBars(GetBarMethod, symbol, barsType = "Ask", periodicity, startTime, endTime, count)
+#   bidAskBars <- merge(bidBars, askBars)
+#   colnames(bidAskBars) <- c("Timestamp", "BidVolume", "BidClose", "BidLow", "BidHigh", "BidOpen",
+#                             "AskVolume", "AskClose", "AskLow", "AskHigh", "AskOpen")
+#   return(bidAskBars)
+# }
 
 # Get current time in ms
 getTimestamp = function() {
@@ -96,13 +117,13 @@ getHMACHeaders = function(url, id, key, secret, method = "GET", body = "") {
   return(auth_value)
 }
 
-#' RTTWebClient Class
-#' @name RTTWebClient
-#' @field web_api_address. Server address. Character
-#' @field web_api_port. Port. Integer
-#' @field web_api_id. Web Api Id. Character
-#' @field web_api_key. Web Api Key. Character
-#' @field web_api_secrer. Web Api Secret. Character
+#RTTWebClient Class
+#@name RTTWebClient
+#@field web_api_address. Server address. Character
+#@field web_api_port. Port. Integer
+#@field web_api_id. Web Api Id. Character
+#@field web_api_key. Web Api Key. Character
+#@field web_api_secrer. Web Api Secret. Character
 #' @import data.table
 #' @import jsonlite
 #' @import httr
@@ -117,12 +138,12 @@ RTTWebClient <- setRefClass("RTTWebClient",
 )
 
 
-#' Get All Dividend
-#' @name GetDividendsRawMethod
-#' @return a data.table with dividends.
+#Get All Dividend
+#@name GetDividendsRawMethod
+#@return a data.table with dividends.
 RTTWebClient$methods(
   GetDividendsRawMethod = function() {
-    "Get All Dividend"
+    #"Get All Dividend"
     address <- .self$web_api_address
     if(!grepl("^https://", address))
       address <- paste0("https://", address)
@@ -151,9 +172,9 @@ RTTWebClient$methods(
   }
 )
 
-#' Get All Current Quotes
-#' @name GetCurrentQuotesRawMethod
-#' @return a data.table with current quotes
+# #' Get All Current Quotes
+# #' @name GetCurrentQuotesRawMethod
+# #' @return a data.table with current quotes
 RTTWebClient$methods(
   GetCurrentQuotesRawMethod = function() {
     "Get All Current Quotes"
@@ -181,16 +202,16 @@ RTTWebClient$methods(
     }
     # data <- content(connect, "text", encoding = "UTF-8")
     ticks <- fromJSON(data)
-    ticks <- data.table("TimeStamp" = ticks$Timestamp, "Symbol" = ticks$Symbol, "BidPrice" = ticks$BestBid$Price,
+    ticks <- data.table("Timestamp" = ticks$Timestamp, "Symbol" = ticks$Symbol, "BidPrice" = ticks$BestBid$Price,
                         "BidVolume" = ticks$BestBid$Volume, "BidType" = ticks$BestBid$Type,  "AskPrice" = ticks$BestAsk$Price,
                         "AskVolume" = ticks$BestAsk$Volume, "AskType" = ticks$BestAsk$Type)
     return(ticks)
   }
 )
 
-#' Get All Current Quotes
-#' @name GetPipsValueRawMethod
-#' @return a data.table with current quotes
+# #' Get All Current Quotes
+# #' @name GetPipsValueRawMethod
+# #' @return a data.table with current quotes
 RTTWebClient$methods(
   GetPipsValueRawMethod = function(targetCurrency, symbols) {
     "Get Pip Value"
@@ -226,9 +247,9 @@ RTTWebClient$methods(
   }
 )
 
-#' Get All Symbols
-#' @name GetSymbolsInfoRawMethod
-#' @return data.table with symbol info
+# #' Get All Symbols
+# #' @name GetSymbolsInfoRawMethod
+# #' @return data.table with symbol info
 RTTWebClient$methods(
   GetSymbolsInfoRawMethod = function(){
     "Get All Symbols"
@@ -260,14 +281,48 @@ RTTWebClient$methods(
   }
 )
 
-#' Get Bar History
-#' @name GetBarRawMethod
-#' @param symbol a character. Symbol Name.
-#' @param barsType. a character. Bars Type. One from c("Ask", "Bid").
-#' @param periodicity. a character. Periodicity. From c("S1", "S10", "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1","MN1")
-#' @param startTimeMs. Long numeric. Timestamp from 1970-01-01 in ms.
-#' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
-#' @return data.table with Bar Info
+# #' Get All Currency Info
+# #' @name GetCurrencyInfoRawMethod
+# #' @return data.table with currency info
+RTTWebClient$methods(
+  GetCurrencyInfoRawMethod = function(){
+    "Get All Symbols"
+    address <- .self$web_api_address
+    if(!grepl("^https://", address))
+      address <- paste0("https://", address)
+    portPattern <- paste0(":", .self$web_api_port, "$")
+    if(!grepl(portPattern, address))
+      address <- paste0(address, ":", .self$web_api_port)
+    if(length(.self$web_api_id) != 0 && length(.self$web_api_key) != 0 && length(.self$web_api_secret) != 0){
+      url_rel <- paste("/api/v2/currency")
+      url_abs <- paste0(address, url_rel)
+      connect <- httr::GET(url_abs, httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L, verbose = FALSE),
+                           httr::add_headers(Authorization = getHMACHeaders(url_abs, .self$web_api_id, .self$web_api_key, .self$web_api_secret)))
+    }else{
+      url_rel <- paste("/api/v2/public/currency")
+      url_abs <- paste0(address, url_rel)
+      connect <- httr::GET(url_abs, httr::config(ssl_verifypeer = 0L, ssl_verifyhost = 0L, verbose = FALSE))
+
+    }
+    data <- httr::content(connect, "text", encoding = "UTF-8")
+    if(connect$status_code != 200) {
+      stop(paste("status_code is not OK", connect$status_code, as.character(data)))
+    }
+    data = fromJSON(data)
+    currency <- as.data.table(data)
+    setkey(currency, "Name")
+    return(currency)
+  }
+)
+
+# #' Get Bar History
+# #' @name GetBarRawMethod
+# #' @param symbol a character. Symbol Name.
+# #' @param barsType. a character. Bars Type. One from c("Ask", "Bid").
+# #' @param periodicity. a character. Periodicity. From c("S1", "S10", "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1","MN1")
+# #' @param startTimeMs. Long numeric. Timestamp from 1970-01-01 in ms.
+# #' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
+# #' @return data.table with Bar Info
 RTTWebClient$methods(
   GetBarRawMethod = function(symbol, barsType, periodicity, startTimeMs, count){
     "Get Bar History"
@@ -306,12 +361,12 @@ RTTWebClient$methods(
   }
 )
 
-#'Get Ticks History
-#' @name GetTicksRawMethod
-#' @param symbol. A character. Symbol Name.
-#' @param startTimeMs. Long numeric. Timestamp from 1970-01-01 in ms.
-#' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
-#' @return data.table with Ticks Info.
+# #'Get Ticks History
+# #' @name GetTicksRawMethod
+# #' @param symbol. A character. Symbol Name.
+# #' @param startTimeMs. Long numeric. Timestamp from 1970-01-01 in ms.
+# #' @param count. Integer. Count of returned Bars from startTimeMs. Max is 1000. Can be negative.
+# #' @return data.table with Ticks Info.
 RTTWebClient$methods(
   GetTicksRawMethod = function(symbol, startTimeMs, count){
     "Get Ticks History"
@@ -354,26 +409,24 @@ RTTWebClient$methods(
                       "AskVolume" = ticks$BestAsk$Volume, "AskType" = ticks$BestAsk$Type))
   }
 )
-#' Init Public Web Client Obj
-#'@name InitPublicWebClient
-#'@param server a character. Web Address.
-#'@param port an integer. Port Number. Default is 8443
-#'@return rTTWebClient obj.
-#'@export
+# #' Init Public Web Client Obj
+# #'@name InitPublicWebClient
+# #'@param server a character. Web Address.
+# #'@param port an integer. Port Number. Default is 8443
+# #'@return rTTWebClient obj.
 InitPublicWebClient <- function(server = "ttlivewebapi.fxopen.com", port=8443L) {
   return(RTTWebClient(web_api_address=server,
                       web_api_port = port))
 }
 
-#' Init Private Web Client Obj
-#'@name InitPrivateWebClient
-#'@param server a character. Web Address.
-#'@param port an integer. Port Number. Default is 8443
-#'@param id a character. HMAC client id.
-#'@param key a character. HMAC client key.
-#'@param secret a character. HMAC secret key.
-#'@return rTTWebClient obj.
-#'@export
+# #' Init Private Web Client Obj
+# #'@name InitPrivateWebClient
+# #'@param server a character. Web Address.
+# #'@param port an integer. Port Number. Default is 8443
+# #'@param id a character. HMAC client id.
+# #'@param key a character. HMAC client key.
+# #'@param secret a character. HMAC secret key.
+# #'@return rTTWebClient obj.
 InitPrivateWebClient <- function(server = "ttlivewebapi.fxopen.com", port=8443L, id = "", key = "", secret = "") {
   return(RTTWebClient(web_api_address=server,
                       web_api_port = port,
@@ -401,8 +454,11 @@ RTTWebApiHost <- setRefClass("RTTWebApiHost",
 RTTWebApiHost$methods(
   GetDividends = function()
   {
-    "Get All Dividend"
-    return(.self$client$GetDividendsRawMethod())
+    "Get All Dividends"
+    # return(.self$client$GetDividendsRawMethod())
+    dividends <- Throttling(.self$client$GetDividendsRawMethod)
+    dividends[, Time := as.POSIXct(Time / 1000, origin = "1970-01-01", tz = "GMT")]
+    return(dividends)
   }
 )
 
@@ -412,12 +468,26 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetSymbolsInfo = function() {
     "Get All Symbols"
-    symbols <- .self$client$GetSymbolsInfoRawMethod()
-    symbols[!grepl("_L$", Symbol), PipsValue := .self$GetPipsValue("USD", Symbol)[,(Value)]]
+    # symbols <- .self$client$GetSymbolsInfoRawMethod()
+    symbols <- Throttling(.self$client$GetSymbolsInfoRawMethod)
+    symbols[!grepl("_L$", Symbol), PipsValue := tryCatch(.self$GetPipsValue("USD", Symbol)[,(Value)], error = function(e) {print(e); as.numeric(NA)})]
+    currentQuotes <- .self$GetCurrentQuotes()
+
+    symbols[currentQuotes, on = .(Symbol), c("LastTimeUpdate", "LastBidPrice", "LastBidVolume", "LastAskPrice", "LastAskVolume") := list(i.Timestamp, i.BidPrice, i.BidVolume, i.AskPrice, i.AskVolume)]
     return(symbols)
   }
 )
 
+#' Get All Currency
+#' @name GetCurrencyInfo
+#' @return data.table with currency info
+RTTWebApiHost$methods(
+  GetCurrencyInfo = function() {
+    "Get All Currencies"
+    currency <- Throttling(.self$client$GetCurrencyInfoRawMethod)
+    return(currency)
+  }
+)
 
 #' Get All Current Quotes
 #' @name GetCurrentQuotes
@@ -425,18 +495,24 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetCurrentQuotes = function() {
     "Get All Current Quotes"
-    return(.self$client$GetCurrentQuotesRawMethod())
+    # currentQuotes <- .self$client$GetCurrentQuotesRawMethod()
+    currentQuotes <- Throttling(.self$client$GetCurrentQuotesRawMethod)
+    currentQuotes[, Timestamp := as.POSIXct(Timestamp / 1000, origin = "1970-01-01", tz = "GMT")]
+    return(currentQuotes)
   }
 )
 
 #' Get Pips Value
 #' @name GetPipsValue
-#' @return a data.table with current quotes
+#' @param targetCurrency a character. Currency Name.
+#' @param symbols a character vectors. Symbols vector.
+#' @return a data.table with pips value in targetCurrency for every symbol in symbols vector
 RTTWebApiHost$methods(
   GetPipsValue = function(targetCurrency, symbols) {
     "Get Pips Value"
     symbols <- paste(sapply(symbols, URLencode, reserved = TRUE, USE.NAMES = FALSE), collapse = URLencode(" ", reserved = FALSE))
-    pipsValue <- .self$client$GetPipsValueRawMethod(targetCurrency, symbols)
+    # pipsValue <- .self$client$GetPipsValueRawMethod(targetCurrency, symbols)
+    pipsValue <- Throttling(.self$client$GetPipsValueRawMethod, targetCurrency, symbols)
     setcolorder(pipsValue, c(2,1))
     setkey(pipsValue, "Symbol")
     return(pipsValue)
@@ -455,8 +531,20 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetBarsHistory = function(symbol, barsType = "Bid", periodicity = "M1", startTime, endTime = as.POSIXct(Sys.Date(), tz = "GMT"), count = 0L) {
     "Get Bar History"
-    if(barsType == "Bid" || barasType == "Ask"){
+    symbol <- sapply(symbol, URLencode, reserved = TRUE, USE.NAMES = FALSE)
+    if(barsType == "Bid" || barsType == "Ask"){
       return(GetBars(.self$client$GetBarRawMethod, symbol, barsType, periodicity, startTime, endTime, count))
+    }
+    if(barsType == "BidAsk"){
+      bid <- GetBars(.self$client$GetBarRawMethod, symbol, "Bid", periodicity, startTime, endTime, count)
+      ask <- GetBars(.self$client$GetBarRawMethod, symbol, "Ask", periodicity, startTime, endTime, count)
+      res <- merge(bid, ask, by = "Timestamp", all = TRUE)
+      setnames(res, seq_along(res), c("Timestamp", "BidOpen", "BidLow", "BidHigh", "BidClose", "BidVolume",
+                                      "AskOpen", "AskLow", "AskHigh", "AskClose", "AskVolume"))
+      setnafill(res, type=c("locf"), cols=seq_along(res))
+      setnafill(res, type=c("nocb"), cols=seq_along(res))
+      return(res)
+
     }
     stop("Wrong Bar Type")
   }
@@ -472,6 +560,7 @@ RTTWebApiHost$methods(
 RTTWebApiHost$methods(
   GetTickHistory = function(symbol, startTime, endTime = as.POSIXct(Sys.Date(), tz = "GMT"), count = 0L) {
     "Get Bar History"
+    symbol <- sapply(symbol, URLencode, reserved = TRUE, USE.NAMES = FALSE)
     return(GetTicks(.self$client$GetTicksRawMethod, symbol, startTime, endTime, count))
   }
 )
@@ -485,6 +574,7 @@ RTTWebApiHost$methods(
 #'@param secret a character. HMAC secret key.
 #'@return RTTWebApiHost ref class.
 #'@importFrom methods new
+#'@importFrom withr local_options
 #'@export
 InitRTTWebApiHost <- function(server = "ttlivewebapi.fxopen.com", port=8443L, id = NULL, key = NULL, secret = NULL){
   if(length(id) != 0 && length(key) != 0 && length(secret) != 0)

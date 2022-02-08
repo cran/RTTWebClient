@@ -26,7 +26,14 @@
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -135,51 +142,53 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RTTWebClient)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span></code></pre></div>
-<div id="example-of-rttwebapi-methods-basic-class" class="section level1">
-<h1>Example of RTTWebApi methods (basic class)</h1>
-<div id="init-publicdefault-client-obj-reference-r-class" class="section level2">
-<h2>Init Public(default) Client Obj (reference R class)</h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ttWebClient <span class="ot">&lt;-</span> <span class="fu">InitPublicWebClient</span>(<span class="at">server =</span> <span class="st">&quot;ttlivewebapi.fxopen.com&quot;</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#or use InitPrivateWebClient(server = &quot;ttlivewebapi.fxopen.com&quot;, port = 8443, id = &quot;&quot;, key = &quot;&quot;, secret = &quot;&quot;) to set a private connect. Need set HMAC id, key and secret</span></span></code></pre></div>
-</div>
-<div id="get-dividends-data.table" class="section level2">
-<h2>Get Dividends data.table</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebClient<span class="sc">$</span><span class="fu">GetDividendsRawMethod</span>())</span></code></pre></div>
-</div>
-<div id="get-symbol-data.table" class="section level2">
-<h2>Get Symbol data.table</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebClient<span class="sc">$</span><span class="fu">GetSymbolsInfoRawMethod</span>())</span></code></pre></div>
-</div>
-<div id="get-barhistory-data.table" class="section level2">
-<h2>Get BarHistory data.table</h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebClient<span class="sc">$</span><span class="fu">GetBarRawMethod</span>(<span class="st">&quot;EURUSD&quot;</span>, <span class="st">&quot;Bid&quot;</span>,<span class="st">&quot;M1&quot;</span>, <span class="fu">round</span>(<span class="fu">as.double</span>(<span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)) <span class="sc">*</span> <span class="dv">1000</span>), <span class="at">count =</span> <span class="sc">-</span><span class="dv">10</span>))</span></code></pre></div>
-</div>
-<div id="get-tickhistory-data.table" class="section level2">
-<h2>Get TickHistory data.table</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebClient<span class="sc">$</span><span class="fu">GetTicksRawMethod</span>(<span class="st">&quot;EURUSD&quot;</span>, <span class="fu">round</span>(<span class="fu">as.double</span>(<span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)) <span class="sc">*</span> <span class="dv">1000</span>), <span class="at">count =</span> <span class="sc">-</span><span class="dv">10</span>))</span></code></pre></div>
-</div>
-</div>
+<!-- # Example of RTTWebApi methods (basic class) -->
+<!-- ## Init Public(default) Client Obj (reference R class) -->
+<!-- ```{r, eval=FALSE} -->
+<!-- ttWebClient <- InitPublicWebClient(server = "ttlivewebapi.fxopen.com") -->
+<!-- #or use InitPrivateWebClient(server = "ttlivewebapi.fxopen.com", port = 8443, id = "", key = "", secret = "") to set a private connect. Need set HMAC id, key and secret -->
+<!-- ``` -->
+<!-- ## Get Dividends data.table -->
+<!-- ```{r, eval=FALSE} -->
+<!-- print(ttWebClient$GetDividendsRawMethod()) -->
+<!-- ``` -->
+<!-- ## Get Symbol data.table -->
+<!-- ```{r, eval=FALSE} -->
+<!-- print(ttWebClient$GetSymbolsInfoRawMethod()) -->
+<!-- ``` -->
+<!-- ## Get BarHistory data.table -->
+<!-- ```{r, eval=FALSE} -->
+<!-- print(ttWebClient$GetBarRawMethod("EURUSD", "Bid","M1", round(as.double(now("UTC")) * 1000), count = -10)) -->
+<!-- ``` -->
+<!-- ## Get TickHistory data.table -->
+<!-- ```{r, eval=FALSE} -->
+<!-- print(ttWebClient$GetTicksRawMethod("EURUSD", round(as.double(now("UTC")) * 1000), count = -10)) -->
+<!-- ``` -->
 <div id="example-of-rttwebapihost-wrapper-about-rttwebclient-to-make-request-from-r-easy" class="section level1">
 <h1>Example of RTTWebApiHost (Wrapper about RTTWebClient to make request from R easy)</h1>
 <div id="init-rttwebapihost-obj" class="section level2">
 <h2>Init RTTWebApiHost obj</h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ttWebApiHost <span class="ot">&lt;-</span> <span class="fu">InitRTTWebApiHost</span>(<span class="at">server =</span> <span class="st">&quot;ttlivewebapi.fxopen.com&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ttWebApiHost <span class="ot">&lt;-</span> <span class="fu">InitRTTWebApiHost</span>(<span class="at">server =</span> <span class="st">&quot;ttlivewebapi.fxopen.com&quot;</span>)</span></code></pre></div>
 </div>
-<div id="get-dividends-data.table-1" class="section level2">
+<div id="get-dividends-data.table" class="section level2">
 <h2>Get Dividends data.table</h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetDividends</span>())</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetDividends</span>())</span></code></pre></div>
 </div>
-<div id="get-symbol-data.table-1" class="section level2">
+<div id="get-symbol-data.table" class="section level2">
 <h2>Get Symbol data.table</h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetSymbolsInfo</span>())</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetSymbolsInfo</span>())</span></code></pre></div>
 </div>
-<div id="get-barhistory-data.table-1" class="section level2">
+<div id="get-barhistory-data.table" class="section level2">
 <h2>Get BarHistory data.table</h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetBarsHistory</span>(<span class="st">&quot;EURUSD&quot;</span>, <span class="st">&quot;Bid&quot;</span>,<span class="st">&quot;M1&quot;</span>, <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>) <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)))</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetBarsHistory</span>(<span class="st">&quot;EURUSD&quot;</span>, <span class="st">&quot;Bid&quot;</span>,<span class="st">&quot;M1&quot;</span>, <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>) <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)))</span></code></pre></div>
 </div>
 <div id="get-tickshistory-data.table" class="section level2">
 <h2>Get TicksHistory data.table</h2>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetTickHistory</span>(<span class="st">&quot;EURUSD&quot;</span>,  <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>) <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)))</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetTickHistory</span>(<span class="st">&quot;EURUSD&quot;</span>,  <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>) <span class="sc">-</span> <span class="fu">days</span>(<span class="dv">1</span>), <span class="fu">now</span>(<span class="st">&quot;UTC&quot;</span>)))</span></code></pre></div>
+</div>
+<div id="get-currency-data.table" class="section level2">
+<h2>Get Currency data.table</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ttWebApiHost<span class="sc">$</span><span class="fu">GetCurrencyInfo</span>())</span></code></pre></div>
 </div>
 </div>
 
